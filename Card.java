@@ -4,6 +4,7 @@ public class Card {
     private String rank;
     private String suit;
     private Integer value;
+    private Powers power;
 
     public enum Powers {
         SEENSWAP,
@@ -12,10 +13,16 @@ public class Card {
         O
     }
 
+    // use this later
+    class IntPowerPair {
+        public Integer v;
+        public Powers p;
+    }
+
     private static HashMap<String, Integer> valueOfCard = new HashMap<>();
 
     static {
-        valueOfCard.put("JOKER", 0);
+        valueOfCard.put("JOKER-JOKER", 0);
 
         valueOfCard.put("A", 1);
 
@@ -47,6 +54,7 @@ public class Card {
 
     public String getRank (){return rank;}
     public String getSuit (){return suit;}
+    public Integer getValue (){return value;}
 
     public Card(String rank, String suit) {
         this.rank = rank;
@@ -57,7 +65,10 @@ public class Card {
         this.value = valueOfCard.get(rank + "-" + suit);
         if (this.value == null)
             this.value = valueOfCard.get(rank);
+    }
 
-        System.out.println("value: " + this.value);
+    @Override
+    public String toString() {
+        return this.rank + "-" + this.suit;
     }
 }
