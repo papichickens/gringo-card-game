@@ -19,7 +19,7 @@ public class Card {
         public Powers p;
     }
 
-    private static HashMap<String, Integer> valueOfCard = new HashMap<>();
+    private static final HashMap<String, Integer> valueOfCard = new HashMap<>();
 
     static {
         valueOfCard.put("JOKER-JOKER", 0);

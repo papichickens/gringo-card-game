@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Deck {
     //Globals
@@ -18,7 +19,8 @@ public class Deck {
         String s = "";
         for (int i = 0; i < deck.size(); i++) {
             Card c = deck.get(i);
-            c.toString();
+            // c.toString();
+            System.out.print(c + ", ");
         }
         return s;
     }
@@ -38,12 +40,24 @@ public class Deck {
         this.deck.add(new Card("JOKER", "JOKER"));
         this.deck.add(new Card("JOKER", "JOKER"));
 
-        System.out.println(this.deck);
-        System.out.println(this.deck.size());
+        // System.out.println(this.deck);
+        // System.out.println(this.deck.size());
     }
 
-    // public void shuffleDeck () {
-    //     deck.
-    // }
+    
 
+    public void shuffleDeck () {
+        Random rnd = new Random();
+        for (int i = deck.size() - 1; i > 0; i-- ) {
+            // Swap
+            int swap_i = rnd.nextInt(i + 1);
+            Card c1 = this.deck.get(i);
+            Card c2 = this.deck.get(swap_i);
+            deck.set(swap_i, c1);
+            deck.set(i, c2);
+        }
+
+        // System.out.println(this.deck);
+        // System.out.println(this.deck.size());
+    }
 }
