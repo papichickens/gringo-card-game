@@ -14,11 +14,15 @@ public class Game {
 
     public Game () {
         Deck deck = new Deck();
-        // List<Player> players = new List<Player>();
-
         deck.fillDeck();
         deck.shuffleDeck();
         System.out.println(deck.toString());
+        this.deck = deck;
+        this.discardDeck = new Deck();
+
+        this.currentPlayerIndex = 0;
+        this.gamePhase = Phase.SETUP;
+        this.gringoCalled = false;
     }
 
     private void setupPlayerDecks(Player[] players) {

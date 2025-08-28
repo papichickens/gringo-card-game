@@ -43,12 +43,142 @@ The content is organized as follows:
 Card.java
 Deck.java
 Game.java
+GameServer.java
 Player.java
+PlayerHandler.java
 Rules.java
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="GameServer.java">
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class GameServer {
+    private ServerSocket serverSocket;
+
+    public GameServer(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+    }
+
+    public void startServer() {
+        try {
+            while(!serverSocket.isClosed()){
+                Socket socket = serverSocket.accept();
+                System.out.println("Player connected!");
+                PlayerHandler playerHandler = new PlayerHandler(socket);
+
+                Thread thread = new Thread(playerHandler);
+                thread.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void closeServerSocket() {
+        try {
+            if (serverSocket != null)
+                serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        ServerSocket serverSocket = new ServerSocket(1234);
+        GameServer gameServer = new GameServer(serverSocket);
+        gameServer.startServer();
+    }
+}
+</file>
+
+<file path="PlayerHandler.java">
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+
+public class PlayerHandler implements Runnable {
+    
+    public static ArrayList<PlayerHandler> playerHandlers = new ArrayList<>();
+    private Socket socket;
+    private BufferedReader bufferedReader;
+    private BufferedWriter bufferedWriter;
+    private String playerUsername;
+
+    public PlayerHandler (Socket socket) throws IOException {
+        try {
+            this.socket = socket;
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+            this.bufferedWriter = new BufferedWriter(outputStreamWriter);
+            InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
+            this.bufferedReader = new BufferedReader(inputStreamReader);
+            this.playerUsername = bufferedReader.readLine();
+
+            playerHandlers.add(this);
+        
+        } catch (IOException e) {
+            closeEverything(socket, bufferedReader, bufferedWriter);
+        }
+    }
+
+    public void broadcastMessage(String message) {
+        for (PlayerHandler cl : playerHandlers) {
+            System.out.println(cl.playerUsername);
+            try {
+                if (!cl.playerUsername.equals(playerUsername)){
+                    cl.bufferedWriter.write(message);
+                    cl.bufferedWriter.newLine();
+                    cl.bufferedWriter.flush();
+                }
+            } catch (IOException e) {
+                closeEverything(socket, bufferedReader, bufferedWriter);
+            }
+        }
+    }
+
+    public void removeClientHandler () {
+        playerHandlers.remove(this);
+        broadcastMessage("Server: " + playerUsername + " has left the game");
+    }
+
+    public void closeEverything (Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
+        removeClientHandler();
+        try {
+            if(bufferedReader != null)
+                bufferedReader.close();
+            if(bufferedWriter != null)
+                bufferedWriter.close();
+            if(socket != null)
+                socket.close(); 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() {
+        String messageFromClient;
+
+        while (socket.isConnected()){
+            try {
+                messageFromClient = bufferedReader.readLine();
+                broadcastMessage("Client message: " + messageFromClient + "\n");
+            } catch (IOException e) {
+                closeEverything(socket, bufferedReader, bufferedWriter);
+                break;
+            }
+        }
+    }
+}
+</file>
 
 <file path="Rules.java">
 public class Rules {
@@ -232,13 +362,94 @@ public class Game {
 </file>
 
 <file path="Player.java">
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.util.Scanner;
+
 public class Player {
     private Deck playerDeck;
+    private Socket socket;
+    private BufferedReader bufferedReader;
+    private BufferedWriter bufferedWriter;
+    private String username;
 
     public Deck getPlayerDeck () {return playerDeck;}
 
-    public Player (Deck playerDeck) {
-        this.playerDeck = playerDeck;
+    public Player (Socket socket, String username) throws IOException {
+        try {
+            this.socket = socket;
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+            this.bufferedWriter = new BufferedWriter(outputStreamWriter);
+            InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
+            this.bufferedReader = new BufferedReader(inputStreamReader);
+            this.username = username;
+        } catch (IOException e) {
+            closeEverything(socket, bufferedReader, bufferedWriter);
+        }
+    }
+
+    public void sendMessage() {
+        try {
+            bufferedWriter.write(username);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+
+            Scanner scanner = new Scanner(System.in);
+            while (socket.isConnected()) {
+                String messageToSend = scanner.nextLine();
+                bufferedWriter.write(username + ": " + messageToSend);
+                bufferedWriter.flush();
+            }
+        } catch (IOException e) {
+            closeEverything(socket, bufferedReader, bufferedWriter);
+        }
+    }
+
+    public void listenForMessage() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String messageFromGame;
+
+                while (socket.isConnected()) {
+                    try {
+                        messageFromGame = bufferedReader.readLine();
+                        System.out.println(messageFromGame);
+                    } catch (IOException e) {
+                        closeEverything(socket, bufferedReader, bufferedWriter);
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void closeEverything (Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
+        try {
+            if(bufferedReader != null)
+                bufferedReader.close();
+            if(bufferedWriter != null)
+                bufferedWriter.close();
+            if(socket != null)
+                socket.close(); 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter username: ");
+        String username = scanner.nextLine();
+        // System.out.println(username);
+
+        Socket socket = new Socket("localhost", 1234);
+        Player player = new Player(socket, username);
+        player.listenForMessage();
+        player.sendMessage();
     }
 }
 </file>

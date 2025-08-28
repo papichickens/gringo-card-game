@@ -1,65 +1,56 @@
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 
 public class PlayerHandler implements Runnable {
-    
-    public static ArrayList<PlayerHandler> playerHandlers = new ArrayList<>();
+
     private Socket socket;
+    // reads from Player
     private BufferedReader bufferedReader;
+    // writes messages to player terminal from server
     private BufferedWriter bufferedWriter;
     private String playerUsername;
 
-    public PlayerHandler (Socket socket) throws IOException {
+    public PlayerHandler(Socket socket) throws IOException {
         try {
             this.socket = socket;
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-            this.bufferedWriter = new BufferedWriter(outputStreamWriter);
-            InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
-            this.bufferedReader = new BufferedReader(inputStreamReader);
+            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
             this.playerUsername = bufferedReader.readLine();
-
-            playerHandlers.add(this);
-        
+            GameServer.addPlayer(this);
         } catch (IOException e) {
-            closeEverything(socket, bufferedReader, bufferedWriter);
+            e.printStackTrace();
         }
     }
 
-    public void broadcastMessage(String message) {
-        for (PlayerHandler cl : playerHandlers) {
-            System.out.println(cl.playerUsername);
-            try {
-                if (!cl.playerUsername.equals(playerUsername)){
-                    cl.bufferedWriter.write(message);
-                    cl.bufferedWriter.newLine();
-                    cl.bufferedWriter.flush();
-                }
-            } catch (IOException e) {
-                closeEverything(socket, bufferedReader, bufferedWriter);
-            }
-        }
+    public String getPlayerUsername() {
+        return playerUsername;
     }
 
-    public void removeClientHandler () {
-        playerHandlers.remove(this);
-        broadcastMessage("Server: " + playerUsername + " has left the game");
-    }
-
-    public void closeEverything (Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
-        removeClientHandler();
+    public void sendMessage(String message) {
         try {
-            if(bufferedReader != null)
-                bufferedReader.close();
-            if(bufferedWriter != null)
-                bufferedWriter.close();
+            bufferedWriter.write(message);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        } catch (IOException e) {
+            closeConnection(socket, bufferedReader, bufferedWriter);
+        }
+    }
+
+
+    public void closeConnection(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
+        try {
+            // if (socket.isConnected())
             if(socket != null)
-                socket.close(); 
+                socket.close();
+            if (bufferedReader != null)
+                bufferedReader.close();
+            if (bufferedWriter != null)
+                bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -67,16 +58,14 @@ public class PlayerHandler implements Runnable {
 
     @Override
     public void run() {
-        String messageFromClient;
-
-        while (socket.isConnected()){
-            try {
-                messageFromClient = bufferedReader.readLine();
-                broadcastMessage("Client message: " + messageFromClient + "\n");
-            } catch (IOException e) {
-                closeEverything(socket, bufferedReader, bufferedWriter);
-                break;
+        try {
+            String input;
+            while ((input = bufferedReader.readLine()) != null) {
+                GameServer.handlePlayerInput(this, input);
+                // System.out.println("sdsddsdd: " + input);
             }
+        } catch (IOException e) {
+            closeConnection(socket, bufferedReader, bufferedWriter);
         }
     }
 }

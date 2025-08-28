@@ -29,16 +29,25 @@ public class Player {
         }
     }
 
-    public void sendMessage() {
+    public void sendUsername() {
         try {
             bufferedWriter.write(username);
             bufferedWriter.newLine();
             bufferedWriter.flush();
+        } catch (IOException e) {
+            closeEverything(socket, bufferedReader, bufferedWriter);
+        }
+    }
 
+    public void startInputLoop() {
+        try {
             Scanner scanner = new Scanner(System.in);
+            System.out.println("write command: ");
             while (socket.isConnected()) {
                 String messageToSend = scanner.nextLine();
+                System.out.println("you wrote: " + messageToSend);
                 bufferedWriter.write(username + ": " + messageToSend);
+                bufferedWriter.newLine();
                 bufferedWriter.flush();
             }
         } catch (IOException e) {
@@ -81,11 +90,11 @@ public class Player {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter username: ");
         String username = scanner.nextLine();
-        // System.out.println(username);
 
         Socket socket = new Socket("localhost", 1234);
         Player player = new Player(socket, username);
         player.listenForMessage();
-        player.sendMessage();
+        player.sendUsername();
+        player.startInputLoop();
     }
 }
