@@ -61,7 +61,7 @@ public class PlayerHandler implements Runnable {
             String input;
             while ((input = bufferedReader.readLine()) != null) {
                 GameServer.handlePlayerInput(this, input);
-                System.out.println("we wrote: " + input);
+                // System.out.println("we wrote: " + input);
             }
             GameServer.removePlayer(this);
             closeConnection(socket, bufferedReader, bufferedWriter);

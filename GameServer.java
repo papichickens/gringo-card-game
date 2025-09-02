@@ -30,11 +30,16 @@ public class GameServer {
 
     public void startServer() {
         try {
-            while(!serverSocket.isClosed()){
+            while(!serverSocket.isClosed() && !gameStarted){
                 Socket socket = serverSocket.accept();
+                if (gameStarted){
+                    socket.close();
+                    break;
+                }
                 System.out.println("Player connected!");
                 addNewPlayerHandler(socket);
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,10 +84,10 @@ public class GameServer {
     }
 
     public static void handlePlayerInput(PlayerHandler sender, String input) {
-        // if (!gameStarted) {
-        //     sender.sendMessage("Game hasn't started yet.");
-        // }
-        System.out.println("client wrote: " + input);
+        if (!gameStarted) {
+            sender.sendMessage("Game hasn't started yet.");
+        }
+        System.out.println("Player " + sender.getPlayerUsername() + " wrote: " + input);
     }
 
     public static void main(String[] args) throws IOException {

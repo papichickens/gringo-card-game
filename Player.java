@@ -46,7 +46,7 @@ public class Player {
             while (socket.isConnected()) {
                 String messageToSend = scanner.nextLine();
                 System.out.println("you wrote: " + messageToSend);
-                bufferedWriter.write(username + ": " + messageToSend);
+                bufferedWriter.write(messageToSend);
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
             }
