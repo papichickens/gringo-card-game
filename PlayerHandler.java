@@ -44,7 +44,6 @@ public class PlayerHandler implements Runnable {
 
     public void closeConnection(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
         try {
-            // if (socket.isConnected())
             if(socket != null)
                 socket.close();
             if (bufferedReader != null)
@@ -62,9 +61,12 @@ public class PlayerHandler implements Runnable {
             String input;
             while ((input = bufferedReader.readLine()) != null) {
                 GameServer.handlePlayerInput(this, input);
-                // System.out.println("sdsddsdd: " + input);
+                System.out.println("we wrote: " + input);
             }
+            GameServer.removePlayer(this);
+            closeConnection(socket, bufferedReader, bufferedWriter);
         } catch (IOException e) {
+            GameServer.removePlayer(this);
             closeConnection(socket, bufferedReader, bufferedWriter);
         }
     }

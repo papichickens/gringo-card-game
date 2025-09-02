@@ -16,15 +16,24 @@ public class GameServer {
         this.game = game;
     }
 
+    public void addNewPlayerHandler(Socket socket) {
+        try {
+            System.out.println("Player connected!");
+            PlayerHandler playerHandler = new PlayerHandler(socket);
+
+            Thread thread = new Thread(playerHandler);
+            thread.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }   
+
     public void startServer() {
         try {
             while(!serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
                 System.out.println("Player connected!");
-                PlayerHandler playerHandler = new PlayerHandler(socket);
-
-                Thread thread = new Thread(playerHandler);
-                thread.start();
+                addNewPlayerHandler(socket);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -42,21 +51,25 @@ public class GameServer {
 
     public static synchronized void addPlayer(PlayerHandler handler) {
         playerHandlers.add(handler);
+        System.out.println("User " + handler.getPlayerUsername() + " connected");
         System.out.println("Current Players: " + playerHandlers.size());
     }
 
     public static synchronized void removePlayer(PlayerHandler handler) {
         playerHandlers.remove(handler);
+        System.out.println("User " + handler.getPlayerUsername() + " disconnected");
         System.out.println("Current Players: " + playerHandlers.size());
-    }
-
-    public void waitForStartGame() {
-
     }
 
     public void startGame() {
         System.out.println("Starting the game!");
         gameStarted = true;
+    }
+
+    public void waitForStartGame() {
+        if(!gameStarted && playerHandlers.size() >= 2){
+            startGame();
+        }
     }
 
     public void broadcastmesage (String Message) {
@@ -77,6 +90,19 @@ public class GameServer {
         Game game = new Game();
         GameServer gameServer = new GameServer(serverSocket, game);
 
-        gameServer.startServer();
+        Thread threadAcceptPlayers = new Thread(gameServer::startServer);
+        threadAcceptPlayers.start();
+
+        Thread threadWaitForStart = new Thread(() -> {
+            while (!gameStarted) {
+                gameServer.waitForStartGame();
+                try {
+                    Thread.sleep(1000); // poll every 1 second
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        threadWaitForStart.start();
     }
 }
