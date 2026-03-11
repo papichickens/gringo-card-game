@@ -96,5 +96,6 @@ public class Player {
         player.listenForMessage();
         player.sendUsername();
         player.startInputLoop();
+        scanner.close();
     }
 }

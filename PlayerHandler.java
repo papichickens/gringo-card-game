@@ -21,10 +21,15 @@ public class PlayerHandler implements Runnable {
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
             this.playerUsername = bufferedReader.readLine();
-            GameServer.addPlayer(this);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static PlayerHandler create(Socket socket) throws IOException {
+        PlayerHandler handler = new PlayerHandler(socket);
+        GameServer.addPlayer(handler);   // now `this` is fully initialized
+        return handler;
     }
 
     public String getPlayerUsername() {

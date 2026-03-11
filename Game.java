@@ -13,11 +13,10 @@ public class Game {
     }
 
     public Game () {
-        Deck deck = new Deck();
-        deck.fillDeck();
-        deck.shuffleDeck();
+        this.deck = new Deck();
+        this.deck.fillDeck();
+        this.deck.shuffleDeck();
         System.out.println(deck.toString());
-        this.deck = deck;
         this.discardDeck = new Deck();
 
         this.currentPlayerIndex = 0;
@@ -26,7 +25,7 @@ public class Game {
     }
 
     private void setupPlayerDecks(Player[] players) {
-
+        //
     }
 
     public static void main (String[] args) {

@@ -26,7 +26,7 @@ public class Deck {
     }
 
     public Deck(){
-        this.deck = new ArrayList<Card>();
+        this.deck = new ArrayList<>(); // diamond inference is supported now
     }
 
     public void fillDeck () {

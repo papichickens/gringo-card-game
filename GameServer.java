@@ -20,6 +20,7 @@ public class GameServer {
         try {
             System.out.println("Player connected!");
             PlayerHandler playerHandler = new PlayerHandler(socket);
+            GameServer.addPlayer(playerHandler);
 
             Thread thread = new Thread(playerHandler);
             thread.start();
